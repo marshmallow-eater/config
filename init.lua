@@ -45,10 +45,19 @@ vim.opt.clipboard = 'unnamedplus'
 require('lazy').setup({
   {
     'nvim-treesitter/nvim-treesitter',
-    dependencies = {
-      'nvim-treesitter/nvim-treesitter-textobjects',
-    },
-    build = ":TSUpdate",
+    dependencies = { 'nvim-treesitter/nvim-treesitter-textobjects' },
+    build = ':TSUpdate',
+    config = function()
+      require('nvim-treesitter.configs').setup({
+        ensure_installed = { "lua", "vim", "vimdoc", "javascript", "typescript", "c", "gdscript" },
+        sync_install = true,
+        auto_install = true,
+        highlight = {
+          enable = true,
+        },
+        indent = { enable = true },
+      })
+    end,
   },
   -- NOTE: First, some plugins that don't require any configuration
   'ryanoasis/vim-devicons',
@@ -64,7 +73,7 @@ require('lazy').setup({
   },
   {
     'windwp/nvim-ts-autotag',
-    config = function ()
+    config = function()
       require('nvim-ts-autotag').setup()
     end
   },
@@ -101,17 +110,38 @@ require('lazy').setup({
     "hrsh7th/vim-vsnip"
   },
   {
+    'stevearc/conform.nvim',
+    event = { "BufWritePre" },
+    cmd = { "ConformInfo" },
+    opts = {
+      -- Use eslint_d for faster linting and formatting
+      formatters_by_ft = {
+        javascript = { "eslint_d" },
+        typescript = { "eslint_d" },
+        javascriptreact = { "eslint_d" },
+        typescriptreact = { "eslint_d" },
+      },
+      -- This is the key part for "fix on save"
+      format_on_save = {
+        timeout_ms = 500,
+        lsp_fallback = true,
+      },
+    },
+  },
+  {
     "folke/trouble.nvim",
     dependencies = {
       "nvim-tree/nvim-web-devicons"
-    }
+    },
+    opts = {},
+    cmd = { "Trouble", "TroubleToggle", "TroubleRefresh" },
   },
   {
     "onsails/lspkind.nvim"
   },
   {
     'sainnhe/everforest',
-    config = function ()
+    config = function()
       vim.cmd "colorscheme everforest"
     end
   },
@@ -120,6 +150,11 @@ require('lazy').setup({
   'tpope/vim-sleuth',
   {
     'nvim-neo-tree/neo-tree.nvim',
+    opts = {
+      window = {
+        position = "float",
+      },
+    },
     dependencies = {
       "nvim-lua/plenary.nvim",
       "nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
@@ -129,72 +164,72 @@ require('lazy').setup({
   -- NOTE: This is where your plugins related to LSP can be installed.
   --  The configuration is done below. Search for lspconfig to find it below.
   { -- LSP Configuration & Plugins
-  'neovim/nvim-lspconfig',
-  dependencies = {
-    -- Automatically install LSPs to stdpath for neovim
-    { 'williamboman/mason.nvim', config = true },
-    'williamboman/mason-lspconfig.nvim',
+    'neovim/nvim-lspconfig',
+    dependencies = {
+      -- Automatically install LSPs to stdpath for neovim
+      { 'williamboman/mason.nvim', config = true },
+      'williamboman/mason-lspconfig.nvim',
 
-    -- Useful status updates for LSP
-    -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
-    { 'j-hui/fidget.nvim', tag = "legacy", opts = {} },
+      -- Useful status updates for LSP
+      -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
+      { 'j-hui/fidget.nvim',       tag = "legacy", opts = {} },
 
-    -- Additional lua configuration, makes nvim stuff amazing!
-    'folke/neodev.nvim',
+      -- Additional lua configuration, makes nvim stuff amazing!
+      'folke/neodev.nvim',
+    },
   },
-},
 
-{
-  "utilyre/barbecue.nvim",
-  name = "barbecue",
-  version = "*",
-  dependencies = {
-    "SmiteshP/nvim-navic",
-    "nvim-tree/nvim-web-devicons", -- optional dependency
+  {
+    "utilyre/barbecue.nvim",
+    name = "barbecue",
+    version = "*",
+    dependencies = {
+      "SmiteshP/nvim-navic",
+      "nvim-tree/nvim-web-devicons", -- optional dependency
+    },
+    opts = {
+      -- configurations go here
+    },
   },
-  opts = {
-    -- configurations go here
-  },
-},
-{ -- Autocompletion
-'hrsh7th/nvim-cmp',
-dependencies = {
-  'hrsh7th/cmp-nvim-lsp',
-  'L3MON4D3/LuaSnip',
-  'saadparwaiz1/cmp_luasnip'
-},
+  { -- Autocompletion
+    'hrsh7th/nvim-cmp',
+    dependencies = {
+      'hrsh7th/cmp-nvim-lsp',
+      'L3MON4D3/LuaSnip',
+      'saadparwaiz1/cmp_luasnip'
+    },
   },
 
   { -- Adds git releated signs to the gutter, as well as utilities for managing changes
-  'lewis6991/gitsigns.nvim',
-  opts = {
-    -- See `:help gitsigns.txt`
-    signs = {
-      add = { text = '+' },
-      change = { text = '~' },
-      delete = { text = '_' },
-      topdelete = { text = '‾' },
-      changedelete = { text = '~' },
+    'lewis6991/gitsigns.nvim',
+    opts = {
+      -- See `:help gitsigns.txt`
+      signs = {
+        add = { text = '+' },
+        change = { text = '~' },
+        delete = { text = '_' },
+        topdelete = { text = '‾' },
+        changedelete = { text = '~' },
+      },
     },
   },
-},
-{
-  'iamcco/markdown-preview.nvim',
-  config = function ()
-    vim.fn["mkdp#util#install"]()
-  end
-},
-{ -- Set lualine as statusline
-'nvim-lualine/lualine.nvim',
--- See `:help lualine.txt`
-opts = {
-  options = {
-    icons_enabled = false,
-    theme = 'onedark',
-    component_separators = '|',
-    section_separators = '',
+  {
+    'iamcco/markdown-preview.nvim',
+    config = function()
+      vim.fn["mkdp#util#install"]()
+    end
   },
-},
+  { -- Set lualine as statusline
+    'nvim-lualine/lualine.nvim',
+    -- See `:help lualine.txt`
+    opts = {
+      options = {
+        icons_enabled = false,
+        theme = 'onedark',
+        component_separators = '|',
+        section_separators = '',
+      },
+    },
   },
 
   -- "gc" to comment visual regions/lines
@@ -235,15 +270,15 @@ opts = {
 }, {})
 
 vim.lsp.handlers['textDocument/publishDiagnostics'] = vim.lsp.with(
-    vim.lsp.diagnostic.on_publish_diagnostics,
-    {
-        underline = true,
-        virtual_text = {
-            spacing = 5,
-            severity_limit = 'Warning',
-        },
-        update_in_insert = true,
-    }
+  vim.lsp.diagnostic.on_publish_diagnostics,
+  {
+    underline = true,
+    virtual_text = {
+      spacing = 5,
+      severity_limit = 'Warning',
+    },
+    update_in_insert = true,
+  }
 )
 
 -- [[ Setting options ]]
@@ -311,12 +346,6 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   pattern = '*',
 })
 
-vim.api.nvim_create_autocmd('BufWritePre', {
-  pattern = {"*.tsx", "*.ts", ".js", ".jsx"},
-  callback = function ()
-    vim.cmd 'EslintFixAll'
-  end
-})
 
 -- [[ Configure Telescope ]]
 -- See `:help telescope` and `:help telescope.setup()`
@@ -333,35 +362,35 @@ require('telescope').setup {
 
 -- Enable telescope fzf native, if installed
 pcall(
-require('telescope').load_extension,
-'fzf',
-'live_grep_args'
+  require('telescope').load_extension,
+  'fzf',
+  'live_grep_args'
 )
 
 
-vim.keymap.set('n', '<C-l>', '<C-W>l', { desc='move right' })
-vim.keymap.set('n', '<C-h>', '<C-W>h', { desc='move left' })
-vim.keymap.set('n', '<C-j>', '<C-W>j', { desc='move down' })
-vim.keymap.set('n', '<C-k>', '<C-W>k', { desc='move up' })
+vim.keymap.set('n', '<C-l>', '<C-W>l', { desc = 'move right' })
+vim.keymap.set('n', '<C-h>', '<C-W>h', { desc = 'move left' })
+vim.keymap.set('n', '<C-j>', '<C-W>j', { desc = 'move down' })
+vim.keymap.set('n', '<C-k>', '<C-W>k', { desc = 'move up' })
 
-vim.keymap.set('n', '<leader>=', 'ggvG=', { desc='indente all file' })
+vim.keymap.set('n', '<leader>=', 'ggvG=', { desc = 'indente all file' })
 vim.keymap.set('n', '<leader>v', ':vsplit<CR><C-W>l', { desc = 'split [V]ertically' })
 
-vim.keymap.set('n', '<leader>ha', ':lua require("harpoon.mark").add_file()<CR>', { desc='[H]arpoon [A]dd' })
-vim.keymap.set('n', '<leader>hd', ':lua require("harpoon.mark").rm_file()<CR>', { desc='[H]arpoon [D]elete' })
-vim.keymap.set('n', '<leader>hm', ':lua require("harpoon.ui").toggle_quick_menu()<CR>', { desc='[H]arpoon [M]enu' })
+vim.keymap.set('n', '<leader>ha', ':lua require("harpoon.mark").add_file()<CR>', { desc = '[H]arpoon [A]dd' })
+vim.keymap.set('n', '<leader>hd', ':lua require("harpoon.mark").rm_file()<CR>', { desc = '[H]arpoon [D]elete' })
+vim.keymap.set('n', '<leader>hm', ':lua require("harpoon.ui").toggle_quick_menu()<CR>', { desc = '[H]arpoon [M]enu' })
 
 vim.keymap.set('n', '<leader>q', ':q<CR>', { desc = '[Q]uit' })
 vim.keymap.set('n', '<leader>l', ':noh<CR>', { desc = 'remove high[L]ight', silent = true })
-vim.keymap.set('n', '<leader>e', ':Neotree position=float<CR>', { desc = '[E]xplorer here' })
+vim.keymap.set('n', '<leader>e', ':Neotree reveal position=float<CR>', { desc = '[E]xplorer here' })
 
 -- begin Terminal
 vim.keymap.set('t', '<leader>q', '<C-\\><C-n>:q<CR>', { desc = 'Quit insert mode in terminal' })
 
-vim.keymap.set('t', '<C-l>', '<C-\\><C-n><C-W>l', { desc='move right' })
-vim.keymap.set('t', '<C-h>', '<C-\\><C-n><C-W>h', { desc='move left' })
-vim.keymap.set('t', '<C-j>', '<C-\\><C-n><C-W>j', { desc='move down' })
-vim.keymap.set('t', '<C-k>', '<C-\\><C-n><C-W>k', { desc='move up' })
+vim.keymap.set('t', '<C-l>', '<C-\\><C-n><C-W>l', { desc = 'move right' })
+vim.keymap.set('t', '<C-h>', '<C-\\><C-n><C-W>h', { desc = 'move left' })
+vim.keymap.set('t', '<C-j>', '<C-\\><C-n><C-W>j', { desc = 'move down' })
+vim.keymap.set('t', '<C-k>', '<C-\\><C-n><C-W>k', { desc = 'move up' })
 
 vim.keymap.set('n', '<leader>tv', ':vsplit<CR><C-W>l:terminal<CR>i', { desc = '[T]erminal [V]ertical' })
 vim.keymap.set('n', '<leader>th', ':split<CR><C-W>j:terminal<CR>i', { desc = '[T]erminal [H]orizontal' })
@@ -369,7 +398,7 @@ vim.keymap.set('n', '<leader>tt', ':tabnew<CR>:terminal<CR>i', { desc = '[T]ermi
 vim.keymap.set('n', '<leader>u', ':UndotreeToggle<CR>', { desc = "toggle [U]ndotree" })
 -- end Terminal
 
-vim.keymap.set('n', '<leader>td', ':TroubleToggle document_diagnostics<CR>', { desc = '[T]rouble [D]ocument' })
+vim.keymap.set('n', '<leader>td', '<cmd>Trouble diagnostics toggle<cr>', { desc = '[T]rouble [D]ocument' })
 
 vim.keymap.set('n', '<leader>bn', ':tabNext<CR>', { desc = '[B]uffer [N]ext' })
 vim.keymap.set('n', '<leader>bp', ':tabprevious<CR>', { desc = '[B]uffer [P]revious' })
@@ -383,7 +412,7 @@ vim.keymap.set('n', '<leader>sf', require('telescope.builtin').find_files, { des
 vim.keymap.set('n', '<leader>sr', require('telescope.builtin').oldfiles, { desc = '[S]earch [R]ecent files' })
 vim.keymap.set('n', '<leader>sj', require('telescope.builtin').jumplist, { desc = '[S]earch [J]umplist' })
 vim.keymap.set('n', '<leader>sh', require('telescope.builtin').help_tags, { desc = '[S]earch [H]elp' })
-vim.keymap.set("n", "<leader>sg", ":lua require('telescope').extensions.live_grep_args.live_grep_args()<CR>", { desc = '[S]earch [G]rep' })
+vim.keymap.set("n", "<leader>sg", ":lua require('telescope').extensions.live_grep_args.live_grep_args()<CR>")
 vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { desc = '[S]earch [D]iagnostic' })
 vim.keymap.set('n', '<leader>sv', require('telescope.builtin').lsp_document_symbols, { desc = '[S]earch [V]ariables' })
 
@@ -453,8 +482,9 @@ end
 --  Add any additional override configuration in the following tables. They will be passed to
 --  the `settings` field of the server config. You must look up that documentation yourself.
 local servers = {
+  eslint = {},
   gopls = {},
-  ts_server = {},
+  ts_ls = {},
   lua_ls = {
     Lua = {
       runtime = { version = 'LuaJIT' },
@@ -511,7 +541,7 @@ cmp.setup {
       mode = 'symbol_text',
       maxwidth = 50,
       ellipsis_char = '...',
-      before = function (_, vim_item)
+      before = function(_, vim_item)
         return vim_item
       end
     })
