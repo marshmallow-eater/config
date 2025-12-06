@@ -251,22 +251,33 @@ require('lazy').setup({
 
   {
     'Pocco81/auto-save.nvim',
+  },
+
+  {
+    'nvim-mini/mini.icons',
+    config = function()
+      require('mini.icons').setup({
+        style              = 'glyph',
+
+        default            = {},
+        directory          = {},
+        extension          = {},
+        file               = {},
+        filetype           = {},
+        lsp                = {},
+        os                 = {},
+
+        use_file_extension = function() return true end
+      })
+    end
+  },
+
+  {
+    'weizheheng/ror.nvim',
+    dependecies = {
+      'rcarriga/nvim-notify',
+    }
   }
-
-  -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
-  --       These are some example plugins that I've included in the kickstart repository.
-  --       Uncomment any of the lines below to enable them.
-  -- require 'kickstart.plugins.autoformat',
-  -- require 'kickstart.plugins.debug',
-
-  -- NOTE: The import below automatically adds your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
-  --    You can use this folder to prevent any conflicts with this init.lua if you're interested in keeping
-  --    up-to-date with whatever is in the kickstart repo.
-  --
-  --    For additional information see: https://github.com/folke/lazy.nvim#-structuring-your-plugins
-  --
-  --    An additional note is that if you only copied in the `init.lua`, you can just comment this line
-  --    to get rid of the warning telling you that there are not plugins in `lua/custom/plugins/`.
 }, {})
 
 vim.lsp.handlers['textDocument/publishDiagnostics'] = vim.lsp.with(
@@ -415,6 +426,7 @@ vim.keymap.set('n', '<leader>sh', require('telescope.builtin').help_tags, { desc
 vim.keymap.set("n", "<leader>sg", ":lua require('telescope').extensions.live_grep_args.live_grep_args()<CR>")
 vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { desc = '[S]earch [D]iagnostic' })
 vim.keymap.set('n', '<leader>sv', require('telescope.builtin').lsp_document_symbols, { desc = '[S]earch [V]ariables' })
+vim.keymap.set('n', '<leader>rr', ':lua require("luasnip.loaders.from_vscode").lazy_load()<CR>')
 
 vim.keymap.set('n', '<leader>/', function()
   -- You can pass additional configuration to telescope to change theme, layout, etc.
