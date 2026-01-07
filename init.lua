@@ -23,6 +23,11 @@ vim.g.neotree_show_hidden = 1
 vim.g.neovide_cursor_animation_length = 0
 vim.g.neovide_scroll_animation_length = 0
 
+vim.o.tabstop = 2     -- A TAB character looks like 2 spaces
+vim.o.softtabstop = 2 -- Number of spaces a tab counts for while editing
+vim.o.shiftwidth = 2  -- Size of an indent
+vim.o.expandtab = true
+
 
 -- Install package manager
 --    https://github.com/folke/lazy.nvim
@@ -463,6 +468,7 @@ local on_attach = function(_, bufnr)
   nmap('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
 
   nmap('gd', vim.lsp.buf.definition, '[G]oto [D]efinition')
+  nmap('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
   nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
   nmap('gI', vim.lsp.buf.implementation, '[G]oto [I]mplementation')
   nmap('ga', vim.diagnostic.open_float, 'Open Diagnostics')
@@ -475,7 +481,7 @@ local on_attach = function(_, bufnr)
   nmap('<C-k>', vim.lsp.buf.signature_help, 'Signature Documentation')
 
   -- Lesser used LSP functionality
-  nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+  nmap('gD', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
   nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
   nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
   nmap('<leader>wl', function()
@@ -496,7 +502,9 @@ end
 local servers = {
   eslint = {},
   gopls = {},
-  ts_ls = {},
+  ts_ls = {
+    filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
+  },
   lua_ls = {
     Lua = {
       runtime = { version = 'LuaJIT' },

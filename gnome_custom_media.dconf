@@ -1,0 +1,19 @@
+[/]
+control-center=@as []
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ulauncher/']
+www=@as []
+
+[custom-keybindings/custom0]
+binding='<Super>t'
+command='kitty'
+name='kitty'
+
+[custom-keybindings/custom1]
+binding='<Super>space'
+command='ulauncher-toggle'
+name='ulauncher'
+
+[custom-keybindings/ulauncher]
+binding='<Primary><Alt>Shift_L'
+command='gapplication launch io.ulauncher.Ulauncher'
+name='Show Ulauncher'
