@@ -31,6 +31,10 @@ function pbpaste
     xsel --clipboard --output
 end
 
+function snake
+    nsnake
+end
+
 # Git "send"
 function send
     if test (count $argv) -eq 0

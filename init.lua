@@ -92,6 +92,36 @@ require('lazy').setup({
       })
     end
   },
+  {
+    'stevearc/conform.nvim',
+    event = { "BufWritePre" },
+    cmd = { "ConformInfo" },
+    config = function()
+      require("conform").setup({
+        formatters_by_ft = {
+          javascript = { "eslint_d" },
+          typescript = { "eslint_d" },
+          javascriptreact = { "eslint_d" },
+          typescriptreact = { "eslint_d" },
+        },
+        format_on_save = {
+          timeout_ms = 3000,
+          lsp_fallback = true,
+        },
+        formatters = {
+          eslint_d = {
+            -- This function is now safe to call because conform is loaded
+            cwd = require("conform.util").root_file({
+              "eslint.config.js",
+              ".eslintrc.js",
+              "package.json",
+            }),
+            require_cwd = true,
+          },
+        },
+      })
+    end,
+  },
   'mhinz/vim-startify',
   'mbbill/undotree',
   'tribela/vim-transparent',
@@ -113,25 +143,6 @@ require('lazy').setup({
   },
   {
     "hrsh7th/vim-vsnip"
-  },
-  {
-    'stevearc/conform.nvim',
-    event = { "BufWritePre" },
-    cmd = { "ConformInfo" },
-    opts = {
-      -- Use eslint_d for faster linting and formatting
-      formatters_by_ft = {
-        javascript = { "eslint_d" },
-        typescript = { "eslint_d" },
-        javascriptreact = { "eslint_d" },
-        typescriptreact = { "eslint_d" },
-      },
-      -- This is the key part for "fix on save"
-      format_on_save = {
-        timeout_ms = 500,
-        lsp_fallback = true,
-      },
-    },
   },
   {
     "folke/trouble.nvim",
@@ -467,7 +478,6 @@ local on_attach = function(_, bufnr)
   nmap('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
   nmap('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
 
-  nmap('gd', vim.lsp.buf.definition, '[G]oto [D]efinition')
   nmap('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
   nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
   nmap('gI', vim.lsp.buf.implementation, '[G]oto [I]mplementation')
@@ -494,16 +504,36 @@ local on_attach = function(_, bufnr)
   end, { desc = 'Format current buffer with LSP' })
 end
 
--- Enable the following language servers
---  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
---
---  Add any additional override configuration in the following tables. They will be passed to
---  the `settings` field of the server config. You must look up that documentation yourself.
 local servers = {
-  eslint = {},
+  eslint = {
+    settings = {
+      workingDirectory = { mode = 'location' },
+    },
+    on_attach = function(client, bufnr)
+      vim.api.nvim_create_autocmd("BufWritePre", {
+        buffer = bufnr,
+        command = "EslintFixAll",
+      })
+    end
+  },
   gopls = {},
   ts_ls = {
-    filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
+    root_dir = require('lspconfig.util').root_pattern("tsconfig.json", "package.json", "jsconfig.json", ".git"),
+    settings = {
+      typescript = {
+        preferences = {
+          importModuleSpecifierPreference = "non-relative",
+          includePackageJsonAutoImports = "on",
+        },
+      },
+    },
+    init_options = {
+      hostInfo = "neovim",
+      preferences = {
+        includeCompletionsForModuleExports = true,
+        includeCompletionsWithInsertText = true,
+      },
+    },
   },
   lua_ls = {
     Lua = {
@@ -533,11 +563,24 @@ mason_lspconfig.setup {
   ensure_installed = vim.tbl_keys(servers),
   handlers = {
     function(server_name)
-      require('lspconfig')[server_name].setup {
+      local server_opts = {
         capabilities = capabilities,
         on_attach = on_attach,
         settings = servers[server_name],
       }
+
+      if server_name == "cssmodules_ls" then
+        server_opts.on_attach = function(client, bufnr)
+          client.server_capabilities.definitionProvider = false
+          on_attach(client, bufnr)
+        end
+      end
+
+      if servers[server_name] and servers[server_name].root_dir then
+        server_opts.root_dir = servers[server_name].root_dir
+      end
+
+      require('lspconfig')[server_name].setup(server_opts)
     end,
   }
 }
