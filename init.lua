@@ -45,7 +45,6 @@ if not vim.loop.fs_stat(lazypath) then
 end
 
 vim.opt.rtp:prepend(lazypath)
-vim.opt.clipboard = 'unnamedplus'
 
 require('lazy').setup({
   {
@@ -54,8 +53,8 @@ require('lazy').setup({
     build = ':TSUpdate',
     config = function()
       require('nvim-treesitter.configs').setup({
-        ensure_installed = { "lua", "vim", "vimdoc", "javascript", "typescript", "c", "gdscript" },
-        sync_install = true,
+        ensure_installed = { "lua", "vim", "vimdoc", "javascript", "typescript", "c", "gdscript", "nix" },
+        sync_install = false,
         auto_install = true,
         highlight = {
           enable = true,
@@ -65,7 +64,6 @@ require('lazy').setup({
     end,
   },
   -- NOTE: First, some plugins that don't require any configuration
-  'ryanoasis/vim-devicons',
   'ThePrimeagen/harpoon',
   -- Git related plugins
   'airblade/vim-rooter',
@@ -103,9 +101,10 @@ require('lazy').setup({
           typescript = { "eslint_d" },
           javascriptreact = { "eslint_d" },
           typescriptreact = { "eslint_d" },
+          nix = { "nixpkgs-fmt" },
         },
         format_on_save = {
-          timeout_ms = 3000,
+          timeout_ms = 1000,
           lsp_fallback = true,
         },
         formatters = {
@@ -137,12 +136,6 @@ require('lazy').setup({
   },
   {
     "hrsh7th/cmp-nvim-lsp"
-  },
-  {
-    "hrsh7th/cmp-vsnip"
-  },
-  {
-    "hrsh7th/vim-vsnip"
   },
   {
     "folke/trouble.nvim",
@@ -267,6 +260,9 @@ require('lazy').setup({
 
   {
     'Pocco81/auto-save.nvim',
+    config = function()
+      require("auto-save").setup()
+    end,
   },
 
   {
@@ -290,7 +286,7 @@ require('lazy').setup({
 
   {
     'weizheheng/ror.nvim',
-    dependecies = {
+    dependencies = {
       'rcarriga/nvim-notify',
     }
   }
@@ -359,8 +355,6 @@ vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
 -- Remap for dealing with word wrap
 vim.keymap.set('n', 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = true })
 vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = true })
-
-vim.opt.clipboard = "unnamedplus"
 
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
@@ -517,6 +511,7 @@ local servers = {
     end
   },
   gopls = {},
+  nixd = {},
   ts_ls = {
     root_dir = require('lspconfig.util').root_pattern("tsconfig.json", "package.json", "jsconfig.json", ".git"),
     settings = {
@@ -640,7 +635,6 @@ cmp.setup {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
     { name = 'nvim_lsp_signature_help' },
-    { name = 'vsnip' }
   },
 }
 
