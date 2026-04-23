@@ -551,34 +551,46 @@ require('neodev').setup()
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
+local setup_server = function(server_name)
+  local server_opts = {
+    capabilities = capabilities,
+    on_attach = on_attach,
+    settings = servers[server_name],
+  }
+
+  if server_name == "cssmodules_ls" then
+    server_opts.on_attach = function(client, bufnr)
+      client.server_capabilities.definitionProvider = false
+      on_attach(client, bufnr)
+    end
+  end
+
+  if servers[server_name] and servers[server_name].root_dir then
+    server_opts.root_dir = servers[server_name].root_dir
+  end
+
+  require('lspconfig')[server_name].setup(server_opts)
+end
+
 -- Ensure the servers above are installed
 local mason_lspconfig = require 'mason-lspconfig'
 
+local mason_servers = {}
+for server, _ in pairs(servers) do
+  if server ~= 'nixd' then
+    table.insert(mason_servers, server)
+  end
+end
+
 mason_lspconfig.setup {
-  ensure_installed = vim.tbl_keys(servers),
+  ensure_installed = mason_servers,
   handlers = {
-    function(server_name)
-      local server_opts = {
-        capabilities = capabilities,
-        on_attach = on_attach,
-        settings = servers[server_name],
-      }
-
-      if server_name == "cssmodules_ls" then
-        server_opts.on_attach = function(client, bufnr)
-          client.server_capabilities.definitionProvider = false
-          on_attach(client, bufnr)
-        end
-      end
-
-      if servers[server_name] and servers[server_name].root_dir then
-        server_opts.root_dir = servers[server_name].root_dir
-      end
-
-      require('lspconfig')[server_name].setup(server_opts)
-    end,
+    setup_server,
   }
 }
+
+-- nixd is not in mason, setup manually
+setup_server('nixd')
 
 -- nvim-cmp setup
 local cmp = require 'cmp'
