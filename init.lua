@@ -27,6 +27,7 @@ vim.o.tabstop = 2     -- A TAB character looks like 2 spaces
 vim.o.softtabstop = 2 -- Number of spaces a tab counts for while editing
 vim.o.shiftwidth = 2  -- Size of an indent
 vim.o.expandtab = true
+vim.opt.clipboard = 'unnamedplus'
 
 
 -- Install package manager
@@ -94,32 +95,20 @@ require('lazy').setup({
     'stevearc/conform.nvim',
     event = { "BufWritePre" },
     cmd = { "ConformInfo" },
-    config = function()
-      require("conform").setup({
-        formatters_by_ft = {
-          javascript = { "eslint_d" },
-          typescript = { "eslint_d" },
-          javascriptreact = { "eslint_d" },
-          typescriptreact = { "eslint_d" },
-          nix = { "nixpkgs-fmt" },
-        },
-        format_on_save = {
-          timeout_ms = 1000,
-          lsp_fallback = true,
-        },
-        formatters = {
-          eslint_d = {
-            -- This function is now safe to call because conform is loaded
-            cwd = require("conform.util").root_file({
-              "eslint.config.js",
-              ".eslintrc.js",
-              "package.json",
-            }),
-            require_cwd = true,
-          },
-        },
-      })
-    end,
+    opts = {
+      formatters_by_ft = {
+        javascript = { "eslint_d" },
+        typescript = { "eslint_d" },
+        javascriptreact = { "eslint_d" },
+        typescriptreact = { "eslint_d" },
+        nix = { "nixpkgs-fmt" },
+      },
+      -- Fix on save with a shorter timeout
+      format_on_save = {
+        timeout_ms = 1000,
+        lsp_fallback = true,
+      },
+    },
   },
   'mhinz/vim-startify',
   'mbbill/undotree',
@@ -453,95 +442,84 @@ vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = "Go to next diagnos
 vim.keymap.set('n', '<leader>d', vim.diagnostic.setloclist, { desc = "Open diagnostics list" })
 
 -- LSP settings.
---  This function gets run when an LSP connects to a particular buffer.
-local on_attach = function(_, bufnr)
-  -- NOTE: Remember that lua is a real programming language, and as such it is possible
-  -- to define small helper and utility functions so you don't have to repeat yourself
-  -- many times.
-  --
-  -- In this case, we create a function that lets us more easily define mappings specific
-  -- for LSP related items. It sets the mode, buffer and description for us each time.
-  local nmap = function(keys, func, desc)
-    if desc then
-      desc = 'LSP: ' .. desc
+-- Modern LspAttach autocmd for Neovim 0.11+
+vim.api.nvim_create_autocmd('LspAttach', {
+  group = vim.api.nvim_create_augroup('UserLspConfig', {}),
+  callback = function(ev)
+    local bufnr = ev.buf
+    local client = vim.lsp.get_client_by_id(ev.data.client_id)
+
+    -- Create keymaps only for the current buffer
+    local nmap = function(keys, func, desc)
+      if desc then
+        desc = 'LSP: ' .. desc
+      end
+      vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
     end
 
-    vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
-  end
+    nmap('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
+    nmap('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
 
-  nmap('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
-  nmap('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
+    nmap('gd', vim.lsp.buf.definition, '[G]oto [D]efinition')
+    nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+    nmap('gI', vim.lsp.buf.implementation, '[G]oto [I]mplementation')
+    nmap('ga', vim.diagnostic.open_float, 'Open Diagnostics')
+    nmap('<leader>D', vim.lsp.buf.type_definition, 'Type [D]efinition')
+    nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
+    nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
 
-  nmap('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
-  nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
-  nmap('gI', vim.lsp.buf.implementation, '[G]oto [I]mplementation')
-  nmap('ga', vim.diagnostic.open_float, 'Open Diagnostics')
-  nmap('<leader>D', vim.lsp.buf.type_definition, 'Type [D]efinition')
-  nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
-  nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
+    -- See `:help K` for why this keymap
+    nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
+    nmap('<C-k>', vim.lsp.buf.signature_help, 'Signature Documentation')
 
-  -- See `:help K` for why this keymap
-  nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
-  nmap('<C-k>', vim.lsp.buf.signature_help, 'Signature Documentation')
+    -- Lesser used LSP functionality
+    nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+    nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
+    nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
+    nmap('<leader>wl', function()
+      print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+    end, '[W]orkspace [L]ist Folders')
 
-  -- Lesser used LSP functionality
-  nmap('gD', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
-  nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
-  nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
-  nmap('<leader>wl', function()
-    print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-  end, '[W]orkspace [L]ist Folders')
+    -- Create a command `:Format` local to the LSP buffer
+    vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
+      vim.lsp.buf.format()
+    end, { desc = 'Format current buffer with LSP' })
 
-  -- Create a command `:Format` local to the LSP buffer
-  vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
-    vim.lsp.buf.format()
-  end, { desc = 'Format current buffer with LSP' })
-end
-
-local servers = {
-  eslint = {
-    settings = {
-      workingDirectory = { mode = 'location' },
-    },
-    on_attach = function(client, bufnr)
+    -- ESLint specific fix-on-save
+    if client.name == "eslint" then
       vim.api.nvim_create_autocmd("BufWritePre", {
         buffer = bufnr,
         command = "EslintFixAll",
       })
     end
-  },
+  end,
+})
+
+-- Enable the following language servers
+local servers = {
+  eslint = {},
   gopls = {},
-  nixd = {},
   ts_ls = {
-    root_dir = require('lspconfig.util').root_pattern("tsconfig.json", "package.json", "jsconfig.json", ".git"),
-    settings = {
-      typescript = {
-        preferences = {
-          importModuleSpecifierPreference = "non-relative",
-          includePackageJsonAutoImports = "on",
-        },
-      },
-    },
-    init_options = {
-      hostInfo = "neovim",
-      preferences = {
-        includeCompletionsForModuleExports = true,
-        includeCompletionsWithInsertText = true,
-      },
-    },
+    filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
   },
   lua_ls = {
-    Lua = {
-      runtime = { version = 'LuaJIT' },
-      workspace = {
-        checkThirdParty = false,
-        library = {
-          vim.env.VIMRUNTIME,
-        }
+    settings = {
+      Lua = {
+        runtime = { version = 'LuaJIT' },
+        workspace = {
+          checkThirdParty = false,
+          library = {
+            vim.env.VIMRUNTIME,
+          }
+        },
+        telemetry = { enable = false },
       },
-      telemetry = { enable = false },
     },
   },
+}
+
+local manual_servers = {
+  nixd = {},
 }
 
 -- Setup neovim lua configuration
@@ -551,46 +529,35 @@ require('neodev').setup()
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
+-- Global LSP config using the new Neovim 0.11+ API
+vim.lsp.config('*', {
+  capabilities = capabilities,
+})
+
 local setup_server = function(server_name)
-  local server_opts = {
-    capabilities = capabilities,
-    on_attach = on_attach,
-    settings = servers[server_name],
-  }
-
-  if server_name == "cssmodules_ls" then
-    server_opts.on_attach = function(client, bufnr)
-      client.server_capabilities.definitionProvider = false
-      on_attach(client, bufnr)
-    end
+  local config = servers[server_name] or manual_servers[server_name] or {}
+  if next(config) ~= nil then
+    -- Merge specific server settings using the new API
+    vim.lsp.config(server_name, config)
   end
-
-  if servers[server_name] and servers[server_name].root_dir then
-    server_opts.root_dir = servers[server_name].root_dir
-  end
-
-  require('lspconfig')[server_name].setup(server_opts)
+  -- Enable the server (it will use defaults from lspconfig if available)
+  vim.lsp.enable(server_name)
 end
 
--- Ensure the servers above are installed
+-- Ensure the servers above are installed via Mason
 local mason_lspconfig = require 'mason-lspconfig'
 
-local mason_servers = {}
-for server, _ in pairs(servers) do
-  if server ~= 'nixd' then
-    table.insert(mason_servers, server)
-  end
-end
-
 mason_lspconfig.setup {
-  ensure_installed = mason_servers,
+  ensure_installed = vim.tbl_keys(servers),
   handlers = {
     setup_server,
   }
 }
 
 -- nixd is not in mason, setup manually
-setup_server('nixd')
+for server_name, _ in pairs(manual_servers) do
+  setup_server(server_name)
+end
 
 -- nvim-cmp setup
 local cmp = require 'cmp'
