@@ -5,8 +5,8 @@ www=@as []
 
 [custom-keybindings/custom0]
 binding='<Super>t'
-command='kitty'
-name='kitty'
+command='footclient'
+name='footclient'
 
 [custom-keybindings/custom1]
 binding='<Super>space'

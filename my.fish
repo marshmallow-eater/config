@@ -2,6 +2,7 @@
 # Use -gx (global export) instead of -Ux (universal export)
 set -gx EDITOR nvim
 set -gx VISUAL nvim
+set -gx TERMINAL footclient
 
 # Suppress the welcome message
 set -g fish_greeting ""

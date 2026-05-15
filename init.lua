@@ -170,10 +170,10 @@ require('lazy').setup({
 
       -- Useful status updates for LSP
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
-      { 'j-hui/fidget.nvim',       tag = "legacy", opts = {} },
+      { 'j-hui/fidget.nvim',       opts = {} },
 
       -- Additional lua configuration, makes nvim stuff amazing!
-      'folke/neodev.nvim',
+      'folke/lazydev.nvim',
     },
   },
 
@@ -281,17 +281,14 @@ require('lazy').setup({
   }
 }, {})
 
-vim.lsp.handlers['textDocument/publishDiagnostics'] = vim.lsp.with(
-  vim.lsp.diagnostic.on_publish_diagnostics,
-  {
-    underline = true,
-    virtual_text = {
-      spacing = 5,
-      severity_limit = 'Warning',
-    },
-    update_in_insert = true,
-  }
-)
+vim.diagnostic.config({
+  underline = true,
+  virtual_text = {
+    spacing = 5,
+    severity = { min = vim.diagnostic.severity.WARN },
+  },
+  update_in_insert = true,
+})
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -523,7 +520,7 @@ local manual_servers = {
 }
 
 -- Setup neovim lua configuration
-require('neodev').setup()
+require('lazydev').setup()
 
 -- nvim-cmp supports additional completion capabilities, so broadcast that to servers
 local capabilities = vim.lsp.protocol.make_client_capabilities()
