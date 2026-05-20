@@ -50,19 +50,31 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup({
   {
     'nvim-treesitter/nvim-treesitter',
-    dependencies = { 'nvim-treesitter/nvim-treesitter-textobjects' },
+    branch = 'main',
     build = ':TSUpdate',
     config = function()
-      require('nvim-treesitter.configs').setup({
-        ensure_installed = { "lua", "vim", "vimdoc", "javascript", "typescript", "c", "gdscript", "nix" },
-        sync_install = false,
+      require('nvim-treesitter').setup({
         auto_install = true,
-        highlight = {
-          enable = true,
-        },
-        indent = { enable = true },
+      })
+      local ts = require('nvim-treesitter')
+      if ts.install then
+        ts.install({ "lua", "vim", "vimdoc", "javascript", "typescript", "c", "gdscript", "nix" })
+      end
+
+      -- Global treesitter highlighting and indentation
+      vim.api.nvim_create_autocmd('FileType', {
+        callback = function()
+          local lang = vim.treesitter.language.get_lang(vim.bo.filetype) or vim.bo.filetype
+          if lang and pcall(vim.treesitter.start) then
+            vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+          end
+        end,
       })
     end,
+  },
+  {
+    'nvim-treesitter/nvim-treesitter-textobjects',
+    branch = 'main',
   },
   -- NOTE: First, some plugins that don't require any configuration
   'ThePrimeagen/harpoon',
@@ -77,6 +89,7 @@ require('lazy').setup({
   },
   {
     'windwp/nvim-ts-autotag',
+    branch = 'main',
     config = function()
       require('nvim-ts-autotag').setup()
     end
